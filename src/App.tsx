@@ -54,6 +54,7 @@ import ConfiguracoesPage from "./pages/admin/ConfiguracoesPage";
 import AgendaPage from "./pages/agenda/AgendaPage";
 import NotFound from "./pages/NotFound";
 import LicencasFuncionamentoPage from "./pages/obrigacoes/LicencasFuncionamentoPage";
+import InventarioAtivosPage from "./pages/obrigacoes/InventarioAtivosPage";
 import Perfil from "./pages/Perfil";
 
 const queryClient = new QueryClient();
@@ -309,6 +310,7 @@ const App = () => (
             <Route path="/fornecedores/notas" element={<ProtectedRoute><NotasFiscaisPage /></ProtectedRoute>} />
             <Route path="/obrigacoes" element={<ProtectedRoute><div className="p-6"><h1 className="text-2xl font-bold">Módulo de Obrigações</h1><p className="text-muted-foreground mt-2">Selecione uma opção no menu</p></div></ProtectedRoute>} />
             <Route path="/obrigacoes/licencas" element={<ProtectedRoute><LicencasFuncionamentoPage /></ProtectedRoute>} />
+            <Route path="/obrigacoes/ativos" element={<ProtectedRoute><InventarioAtivosPage /></ProtectedRoute>} />
             <Route path="/agenda" element={<ProtectedRoute><AgendaPage /></ProtectedRoute>} />
             <Route path="/lembretes" element={<ProtectedRoute><LembretesPage /></ProtectedRoute>} />
             <Route path="/exemplo-imagem" element={<ProtectedRoute><ExemploImagem /></ProtectedRoute>} />

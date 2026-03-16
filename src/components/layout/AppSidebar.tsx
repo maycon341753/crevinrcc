@@ -124,6 +124,7 @@ const navigationItems = [
     url: "/obrigacoes",
     icon: FileText,
     subItems: [
+      { title: "Inventário de Ativos", url: "/obrigacoes/ativos" },
       { title: "Licenças de Funcionamento", url: "/obrigacoes/licencas" },
       { title: "DAS Mensal", url: "/obrigacoes/das" },
       { title: "Portal do MEI", url: "/obrigacoes/mei" },
