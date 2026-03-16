@@ -94,7 +94,7 @@ export default function LicencasFuncionamentoPage() {
       setLicencas(data ?? []);
     } catch (err) {
       console.error("Erro ao carregar licenças:", err);
-      const code = (err as any)?.code ?? null;
+      const code = (err as { code?: string } | null)?.code ?? null;
       setErrorCode(code);
       if (code === "PGRST205") {
         toast.error("Tabela 'licencas_funcionamento' não encontrada. Aplique a migration.");
@@ -159,7 +159,8 @@ export default function LicencasFuncionamentoPage() {
       fetchLicencas();
     } catch (err) {
       console.error("Erro ao enviar PDF:", err);
-      const msg = (err as any)?.message?.toString?.() ?? "";
+      const rawMessage = (err as { message?: unknown } | null)?.message;
+      const msg = typeof rawMessage === "string" ? rawMessage : "";
       if (msg.includes("Bucket not found")) {
         toast.error("Bucket 'licencas' não encontrado. Aplique a migration crevin-care-hub/supabase/migrations/20251112090500_create_storage_bucket_licencas.sql.");
       } else if (
@@ -220,8 +221,9 @@ export default function LicencasFuncionamentoPage() {
 
       setLicencas((prev) => prev.filter((x) => x.id !== l.id));
       toast.success("Licença excluída com sucesso.");
-    } catch (err: any) {
-      toast.error(`Falha ao excluir licença: ${err.message ?? "erro desconhecido"}`);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "";
+      toast.error(`Falha ao excluir licença: ${msg || "erro desconhecido"}`);
     } finally {
       setDeletingId(null);
     }
@@ -234,14 +236,14 @@ export default function LicencasFuncionamentoPage() {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="flex justify-between items-center mb-6">
+    <div className="container mx-auto p-4 sm:px-6 sm:py-8">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold">Licenças de Funcionamento</h1>
           <p className="text-muted-foreground">Gerencie licenças no módulo Obrigações</p>
         </div>
-        <div className="flex gap-2">
-          <Button onClick={() => setShowAdd(true)}>
+        <div className="flex gap-2 w-full sm:w-auto">
+          <Button onClick={() => setShowAdd(true)} className="w-full sm:w-auto">
             <Plus className="h-4 w-4 mr-2" />
             Adicionar Licença
           </Button>
@@ -252,7 +254,7 @@ export default function LicencasFuncionamentoPage() {
         <CardHeader>
           <CardTitle>Filtros</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-4">
           <Input
             placeholder="Buscar por título, emissor ou número"
             value={search}
@@ -280,55 +282,88 @@ export default function LicencasFuncionamentoPage() {
               </div>
             </div>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Título</TableHead>
-                  <TableHead>Emissor</TableHead>
-                  <TableHead>Número</TableHead>
-                  <TableHead>Emissão</TableHead>
-                  <TableHead>Validade</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filtered.map((l) => {
-                  const s = calcStatus(l.data_validade);
-                  return (
-                    <TableRow key={l.id}>
-                      <TableCell className="font-medium">{l.titulo}</TableCell>
-                      <TableCell>{l.emissor ?? "-"}</TableCell>
-                      <TableCell>{l.numero ?? "-"}</TableCell>
-                      <TableCell>{formatDate(l.data_emissao)}</TableCell>
-                      <TableCell>{formatDate(l.data_validade)}</TableCell>
-                      <TableCell>
-                        <Badge variant={s.variant as any}>{s.label}</Badge>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-2">
-                          <Button variant="outline" onClick={() => triggerUpload(l.id)}>
-                            <Upload className="h-4 w-4 mr-2" />
-                            Upload PDF
-                          </Button>
-                          <Button variant="outline" onClick={() => openPdf(l)} disabled={!l.arquivo_url}>
-                            <Eye className="h-4 w-4 mr-2" />
-                            Ver PDF
-                          </Button>
-                          <Button variant="outline" onClick={() => openEdit(l)}>
-                            <Pencil className="h-4 w-4 mr-2" />
-                            Editar
-                          </Button>
-                      <Button variant="outline" onClick={() => openInfo(l)}>
-                        <Info className="h-4 w-4 mr-2" />
-                        Detalhes
-                      </Button>
+            <div className="rounded-md border overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="min-w-[220px]">Título</TableHead>
+                    <TableHead className="hidden md:table-cell min-w-[160px]">Emissor</TableHead>
+                    <TableHead className="hidden md:table-cell min-w-[140px]">Número</TableHead>
+                    <TableHead className="hidden lg:table-cell min-w-[120px]">Emissão</TableHead>
+                    <TableHead className="min-w-[120px]">Validade</TableHead>
+                    <TableHead className="min-w-[140px]">Status</TableHead>
+                    <TableHead className="text-right min-w-[180px]">Ações</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filtered.map((l) => {
+                    const s = calcStatus(l.data_validade);
+                    return (
+                      <TableRow key={l.id}>
+                        <TableCell className="font-medium">
+                          <div className="flex flex-col">
+                            <span>{l.titulo}</span>
+                            <span className="text-xs text-muted-foreground md:hidden">
+                              {(l.emissor ?? "-")}{l.numero ? ` • ${l.numero}` : ""}
+                            </span>
+                          </div>
+                        </TableCell>
+                        <TableCell className="hidden md:table-cell">{l.emissor ?? "-"}</TableCell>
+                        <TableCell className="hidden md:table-cell">{l.numero ?? "-"}</TableCell>
+                        <TableCell className="hidden lg:table-cell">{formatDate(l.data_emissao)}</TableCell>
+                        <TableCell>{formatDate(l.data_validade)}</TableCell>
+                        <TableCell>
+                          <Badge variant={s.variant}>{s.label}</Badge>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex flex-wrap justify-end gap-1">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="h-8 w-8 p-0 sm:h-9 sm:w-auto sm:px-3"
+                              onClick={() => triggerUpload(l.id)}
+                              title="Upload PDF"
+                            >
+                              <Upload className="h-4 w-4 sm:mr-2" />
+                              <span className="hidden sm:inline">Upload</span>
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="h-8 w-8 p-0 sm:h-9 sm:w-auto sm:px-3"
+                              onClick={() => openPdf(l)}
+                              disabled={!l.arquivo_url}
+                              title="Ver PDF"
+                            >
+                              <Eye className="h-4 w-4 sm:mr-2" />
+                              <span className="hidden sm:inline">Ver</span>
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="h-8 w-8 p-0 sm:h-9 sm:w-auto sm:px-3"
+                              onClick={() => openEdit(l)}
+                              title="Editar"
+                            >
+                              <Pencil className="h-4 w-4 sm:mr-2" />
+                              <span className="hidden sm:inline">Editar</span>
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="h-8 w-8 p-0 sm:h-9 sm:w-auto sm:px-3"
+                              onClick={() => openInfo(l)}
+                              title="Detalhes"
+                            >
+                              <Info className="h-4 w-4 sm:mr-2" />
+                              <span className="hidden sm:inline">Detalhes</span>
+                            </Button>
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
                           <Button
                             variant="outline"
                             size="sm"
-                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                            className="h-8 w-8 p-0 sm:h-9 sm:w-9 text-red-600 hover:text-red-700 hover:bg-red-50"
                             disabled={deletingId === l.id}
                             title="Excluir licença"
                           >
@@ -354,20 +389,21 @@ export default function LicencasFuncionamentoPage() {
                           </AlertDialogFooter>
                         </AlertDialogContent>
                       </AlertDialog>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              );
-            })}
-                {filtered.length === 0 && (
-                  <TableRow>
-                    <TableCell colSpan={7} className="text-center text-muted-foreground">
-                      Nenhuma licença encontrada
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                  {filtered.length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
+                        Nenhuma licença encontrada
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </div>
           )}
         </CardContent>
       </Card>

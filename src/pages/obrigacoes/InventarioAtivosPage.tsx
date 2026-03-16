@@ -226,13 +226,13 @@ export default function InventarioAtivosPage() {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="container mx-auto p-4 sm:px-6 sm:py-8">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold">Inventário de Ativos</h1>
           <p className="text-muted-foreground">Gerencie o patrimônio e bens da instituição</p>
         </div>
-        <Button onClick={openCreate}>
+        <Button onClick={openCreate} className="w-full sm:w-auto">
           <Plus className="h-4 w-4 mr-2" />
           Novo Ativo
         </Button>
@@ -242,8 +242,8 @@ export default function InventarioAtivosPage() {
         <CardHeader>
           <CardTitle>Filtros</CardTitle>
         </CardHeader>
-        <CardContent className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-          <div className="relative w-full md:max-w-md">
+        <CardContent className="p-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="relative w-full sm:max-w-md">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Buscar por patrimônio, nome, categoria, localização..."
@@ -252,7 +252,7 @@ export default function InventarioAtivosPage() {
               className="pl-9"
             />
           </div>
-          <div className="w-full md:w-[240px]">
+          <div className="w-full sm:w-[240px]">
             <Select value={filterStatus} onValueChange={(v) => setFilterStatus(v as AtivoStatus | "todos")}>
               <SelectTrigger>
                 <SelectValue placeholder="Status" />
@@ -325,10 +325,22 @@ export default function InventarioAtivosPage() {
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex items-center justify-end gap-1">
-                          <Button variant="outline" size="sm" onClick={() => openEdit(a)}>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-8 w-8 p-0 sm:h-9 sm:w-9"
+                            onClick={() => openEdit(a)}
+                            title="Editar"
+                          >
                             <Pencil className="h-4 w-4" />
                           </Button>
-                          <Button variant="outline" size="sm" onClick={() => askDelete(a)}>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-8 w-8 p-0 sm:h-9 sm:w-9"
+                            onClick={() => askDelete(a)}
+                            title="Excluir"
+                          >
                             <Trash2 className="h-4 w-4" />
                           </Button>
                         </div>
@@ -343,7 +355,7 @@ export default function InventarioAtivosPage() {
       </Card>
 
       <Dialog open={openForm} onOpenChange={setOpenForm}>
-        <DialogContent className="sm:max-w-[720px]">
+        <DialogContent className="sm:max-w-[720px] w-[95vw] max-h-[85vh] overflow-auto">
           <DialogHeader>
             <DialogTitle>{editing ? "Editar Ativo" : "Novo Ativo"}</DialogTitle>
           </DialogHeader>
@@ -439,7 +451,7 @@ export default function InventarioAtivosPage() {
       </Dialog>
 
       <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
-        <DialogContent className="sm:max-w-[420px]">
+        <DialogContent className="sm:max-w-[420px] w-[95vw]">
           <DialogHeader>
             <DialogTitle>Confirmar exclusão</DialogTitle>
           </DialogHeader>
@@ -459,4 +471,3 @@ export default function InventarioAtivosPage() {
     </div>
   );
 }
-
