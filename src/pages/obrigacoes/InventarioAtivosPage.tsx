@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Plus, Pencil, Trash2, Search, Download } from "lucide-react";
+import { Plus, Pencil, Trash2, Search, Download, Eye, Printer } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { formatBrazilianCurrency, formatBrazilianDate } from "@/lib/utils";
+import { formatBrazilianCurrency, formatBrazilianDate, formatCurrencyInput, parseBrazilianCurrency } from "@/lib/utils";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
@@ -90,6 +90,10 @@ export default function InventarioAtivosPage() {
   const [saving, setSaving] = useState(false);
   const [editing, setEditing] = useState<AtivoInventario | null>(null);
   const [form, setForm] = useState({ ...emptyForm });
+  const [detailsOpen, setDetailsOpen] = useState(false);
+  const [detailsTarget, setDetailsTarget] = useState<AtivoInventario | null>(null);
+  const [labelOpen, setLabelOpen] = useState(false);
+  const [labelTarget, setLabelTarget] = useState<AtivoInventario | null>(null);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<AtivoInventario | null>(null);
 
@@ -137,17 +141,38 @@ export default function InventarioAtivosPage() {
   const exportPdf = () => {
     const doc = new jsPDF({ unit: "pt", format: "a4", orientation: "landscape" });
     const pageWidth = doc.internal.pageSize.width;
+    const pageHeight = doc.internal.pageSize.height;
+    const baseMargin = 24;
 
-    doc.setFontSize(18);
-    doc.setTextColor(40, 40, 40);
-    doc.text("Inventário de Ativos", pageWidth / 2, 32, { align: "center" });
+    const instituicaoLinha1 = "CREVIN - Lar do Idoso";
+    const instituicaoLinha2 = "Comunidade de Renovação Esperança e Vida Nova";
+    const instituicaoCnpj = "CNPJ: 01.600.253/0001-69";
+    const nomeRelatorio = "Relatório: Inventário de Ativos";
+    const instituicaoEndereco =
+      "Avenida Floriano Peixoto, Quadra 63, Lote 12, Setor Tradicional, Planaltina - DF, CEP: 73330-083";
+
+    const drawHeaderFooter = () => {
+      doc.setFontSize(11);
+      doc.setTextColor(60, 60, 60);
+      doc.text(instituicaoLinha1, pageWidth / 2, 20, { align: "center" });
+      doc.text(instituicaoLinha2, pageWidth / 2, 34, { align: "center" });
+      doc.text(instituicaoCnpj, pageWidth / 2, 48, { align: "center" });
+      doc.text(nomeRelatorio, pageWidth / 2, 62, { align: "center" });
+
+      doc.setDrawColor(220, 220, 220);
+      doc.line(baseMargin, 72, pageWidth - baseMargin, 72);
+
+      doc.setFontSize(9);
+      doc.setTextColor(120, 120, 120);
+      doc.text(instituicaoEndereco, pageWidth / 2, pageHeight - 16, { align: "center" });
+    };
 
     doc.setFontSize(10);
     doc.setTextColor(100, 100, 100);
     doc.text(
       `Gerado em: ${new Date().toLocaleDateString("pt-BR")} às ${new Date().toLocaleTimeString("pt-BR")}`,
       pageWidth / 2,
-      48,
+      86,
       { align: "center" }
     );
 
@@ -173,12 +198,11 @@ export default function InventarioAtivosPage() {
 
     const columnWidths = [52, 90, 58, 60, 60, 48, 48, 48, 48, 48, 48, 54, 90];
     const tableWidth = columnWidths.reduce((acc, w) => acc + w, 0);
-    const baseMargin = 24;
     const leftMargin = Math.max(baseMargin, Math.floor((pageWidth - tableWidth) / 2));
 
     autoTable(doc, {
-      startY: 62,
-      margin: { left: leftMargin, right: baseMargin },
+      startY: 102,
+      margin: { left: leftMargin, right: baseMargin, bottom: 30 },
       head: [[
         "Patrimônio",
         "Nome",
@@ -198,6 +222,9 @@ export default function InventarioAtivosPage() {
       theme: "grid",
       styles: { fontSize: 7, cellPadding: 4, overflow: "linebreak" },
       headStyles: { fillColor: [66, 66, 66] },
+      didDrawPage: () => {
+        drawHeaderFooter();
+      },
       columnStyles: {
         0: { cellWidth: columnWidths[0] },
         1: { cellWidth: columnWidths[1] },
@@ -239,13 +266,92 @@ export default function InventarioAtivosPage() {
       status: a.status ?? "ativo",
       condicao: a.condicao ?? "bom",
       data_aquisicao: a.data_aquisicao ?? "",
-      valor_aquisicao: a.valor_aquisicao === null || a.valor_aquisicao === undefined ? "" : String(a.valor_aquisicao),
+      valor_aquisicao:
+        a.valor_aquisicao === null || a.valor_aquisicao === undefined
+          ? ""
+          : a.valor_aquisicao.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
       marca: a.marca ?? "",
       modelo: a.modelo ?? "",
       numero_serie: a.numero_serie ?? "",
       observacoes: a.observacoes ?? "",
     });
     setOpenForm(true);
+  };
+
+  const openDetails = (a: AtivoInventario) => {
+    setDetailsTarget(a);
+    setDetailsOpen(true);
+  };
+
+  const openLabel = (a: AtivoInventario) => {
+    setLabelTarget(a);
+    setLabelOpen(true);
+  };
+
+  const printLabel = (a: AtivoInventario) => {
+    const instituicao = "CREVIN - Lar do Idoso";
+    const numeroSerie = a.numero_serie?.trim() || "—";
+
+    const safe = (s: string) =>
+      s
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+
+    const html = `<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Etiqueta</title>
+    <style>
+      @page { size: 80mm 30mm; margin: 0; }
+      html, body { width: 80mm; height: 30mm; margin: 0; padding: 0; }
+      * { box-sizing: border-box; }
+      body { font-family: Arial, Helvetica, sans-serif; display: flex; align-items: center; justify-content: center; }
+      .label { width: 80mm; height: 30mm; padding: 3mm; display: flex; flex-direction: column; justify-content: center; }
+      .org { font-size: 10pt; font-weight: 700; text-align: center; line-height: 1.1; }
+      .serialTitle { margin-top: 1.5mm; font-size: 8pt; color: #444; text-align: center; }
+      .serial { margin-top: 0.5mm; font-size: 13pt; font-weight: 700; text-align: center; letter-spacing: 0.3pt; }
+    </style>
+  </head>
+  <body>
+    <div class="label">
+      <div class="org">${safe(instituicao)}</div>
+      <div class="serialTitle">Nº de Série</div>
+      <div class="serial">${safe(numeroSerie)}</div>
+    </div>
+  </body>
+</html>`;
+
+    const iframe = document.createElement("iframe");
+    iframe.style.position = "fixed";
+    iframe.style.right = "0";
+    iframe.style.bottom = "0";
+    iframe.style.width = "0";
+    iframe.style.height = "0";
+    iframe.style.border = "0";
+    iframe.setAttribute("aria-hidden", "true");
+    document.body.appendChild(iframe);
+
+    const w = iframe.contentWindow;
+    if (!w) {
+      iframe.remove();
+      toast.error("Impressão bloqueada pelo navegador");
+      return;
+    }
+
+    w.document.open();
+    w.document.write(html);
+    w.document.close();
+    w.focus();
+    w.print();
+
+    window.setTimeout(() => {
+      iframe.remove();
+    }, 1000);
   };
 
   const onSave = async () => {
@@ -267,7 +373,7 @@ export default function InventarioAtivosPage() {
         status: form.status,
         condicao: form.condicao,
         data_aquisicao: form.data_aquisicao || null,
-        valor_aquisicao: form.valor_aquisicao === "" ? null : Number(form.valor_aquisicao),
+        valor_aquisicao: form.valor_aquisicao === "" ? null : parseBrazilianCurrency(form.valor_aquisicao),
         marca: (form.marca || "").trim() || null,
         modelo: (form.modelo || "").trim() || null,
         numero_serie: (form.numero_serie || "").trim() || null,
@@ -290,7 +396,17 @@ export default function InventarioAtivosPage() {
       setEditing(null);
       await fetchAtivos();
     } catch (err: unknown) {
-      toast.error("Erro ao salvar ativo");
+      const msg = err instanceof Error ? err.message : "";
+      if (
+        msg.toLowerCase().includes("row-level security") ||
+        msg.toLowerCase().includes("violates row-level security") ||
+        msg.toLowerCase().includes("permission denied") ||
+        msg.toLowerCase().includes("insufficient_privilege")
+      ) {
+        toast.error("Sem permissão para editar este ativo (RLS)");
+      } else {
+        toast.error(msg ? `Erro ao salvar ativo: ${msg}` : "Erro ao salvar ativo");
+      }
     } finally {
       setSaving(false);
     }
@@ -382,7 +498,7 @@ export default function InventarioAtivosPage() {
                   <TableHead className="min-w-[120px]">Condição</TableHead>
                   <TableHead className="hidden md:table-cell min-w-[140px]">Aquisição</TableHead>
                   <TableHead className="hidden lg:table-cell min-w-[140px]">Valor</TableHead>
-                  <TableHead className="text-right min-w-[110px]">Ações</TableHead>
+                  <TableHead className="text-right min-w-[190px]">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -425,6 +541,24 @@ export default function InventarioAtivosPage() {
                             variant="outline"
                             size="sm"
                             className="h-8 w-8 p-0 sm:h-9 sm:w-9"
+                            onClick={() => openDetails(a)}
+                            title="Detalhes"
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-8 w-8 p-0 sm:h-9 sm:w-9"
+                            onClick={() => openLabel(a)}
+                            title="Etiqueta"
+                          >
+                            <Printer className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-8 w-8 p-0 sm:h-9 sm:w-9"
                             onClick={() => openEdit(a)}
                             title="Editar"
                           >
@@ -449,6 +583,129 @@ export default function InventarioAtivosPage() {
           </div>
         </CardContent>
       </Card>
+
+      <Dialog
+        open={labelOpen}
+        onOpenChange={(v) => {
+          setLabelOpen(v);
+          if (!v) setLabelTarget(null);
+        }}
+      >
+        <DialogContent className="sm:max-w-[520px] w-[95vw]">
+          <DialogHeader>
+            <DialogTitle>Etiqueta do Ativo</DialogTitle>
+          </DialogHeader>
+          {labelTarget ? (
+            <div className="space-y-3">
+              <div className="mx-auto w-full max-w-[360px] rounded-md border p-4">
+                <div className="text-center font-semibold">CREVIN - Lar do Idoso</div>
+                <div className="mt-2 text-center text-xs text-muted-foreground">Nº de Série</div>
+                <div className="mt-1 text-center text-lg font-semibold">
+                  {labelTarget.numero_serie?.trim() || "—"}
+                </div>
+              </div>
+            </div>
+          ) : null}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setLabelOpen(false)}>
+              Fechar
+            </Button>
+            <Button
+              onClick={() => {
+                if (!labelTarget) return;
+                printLabel(labelTarget);
+              }}
+            >
+              Imprimir etiqueta
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={detailsOpen}
+        onOpenChange={(v) => {
+          setDetailsOpen(v);
+          if (!v) setDetailsTarget(null);
+        }}
+      >
+        <DialogContent className="sm:max-w-[720px] w-[95vw] max-h-[85vh] overflow-auto">
+          <DialogHeader>
+            <DialogTitle>Detalhes do Patrimônio</DialogTitle>
+          </DialogHeader>
+          {detailsTarget ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-2">
+              <div>
+                <div className="text-xs text-muted-foreground">Patrimônio</div>
+                <div className="font-mono text-sm">{detailsTarget.patrimonio_numero}</div>
+              </div>
+              <div>
+                <div className="text-xs text-muted-foreground">Nome</div>
+                <div className="text-sm">{detailsTarget.nome}</div>
+              </div>
+              <div>
+                <div className="text-xs text-muted-foreground">Categoria</div>
+                <div className="text-sm">{detailsTarget.categoria || "—"}</div>
+              </div>
+              <div>
+                <div className="text-xs text-muted-foreground">Localização</div>
+                <div className="text-sm">{detailsTarget.localizacao || "—"}</div>
+              </div>
+              <div>
+                <div className="text-xs text-muted-foreground">Responsável</div>
+                <div className="text-sm">{detailsTarget.responsavel || "—"}</div>
+              </div>
+              <div className="flex items-start gap-2">
+                <div className="flex-1">
+                  <div className="text-xs text-muted-foreground">Status</div>
+                  <div className="mt-1">
+                    <Badge variant={statusBadgeVariant(detailsTarget.status)}>{statusLabels[detailsTarget.status]}</Badge>
+                  </div>
+                </div>
+                <div className="flex-1">
+                  <div className="text-xs text-muted-foreground">Condição</div>
+                  <div className="mt-1">
+                    <Badge variant={condicaoBadgeVariant(detailsTarget.condicao)}>{condicaoLabels[detailsTarget.condicao]}</Badge>
+                  </div>
+                </div>
+              </div>
+              <div>
+                <div className="text-xs text-muted-foreground">Data de Aquisição</div>
+                <div className="text-sm">
+                  {detailsTarget.data_aquisicao ? formatBrazilianDate(detailsTarget.data_aquisicao) : "—"}
+                </div>
+              </div>
+              <div>
+                <div className="text-xs text-muted-foreground">Valor de Aquisição</div>
+                <div className="text-sm">
+                  {detailsTarget.valor_aquisicao !== null && detailsTarget.valor_aquisicao !== undefined
+                    ? formatBrazilianCurrency(detailsTarget.valor_aquisicao)
+                    : "—"}
+                </div>
+              </div>
+              <div>
+                <div className="text-xs text-muted-foreground">Marca</div>
+                <div className="text-sm">{detailsTarget.marca || "—"}</div>
+              </div>
+              <div>
+                <div className="text-xs text-muted-foreground">Modelo</div>
+                <div className="text-sm">{detailsTarget.modelo || "—"}</div>
+              </div>
+              <div className="md:col-span-2">
+                <div className="text-xs text-muted-foreground">Número de Série</div>
+                <div className="text-sm">{detailsTarget.numero_serie || "—"}</div>
+              </div>
+              <div className="md:col-span-2">
+                <div className="text-xs text-muted-foreground">Observações</div>
+                <div className="text-sm whitespace-pre-wrap">{detailsTarget.observacoes || "—"}</div>
+              </div>
+            </div>
+          ) : null}
+          <DialogFooter>
+            <Button onClick={() => setDetailsOpen(false)}>Fechar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={openForm} onOpenChange={setOpenForm}>
         <DialogContent className="sm:max-w-[720px] w-[95vw] max-h-[85vh] overflow-auto">
@@ -512,10 +769,11 @@ export default function InventarioAtivosPage() {
             <div className="space-y-2">
               <Label>Valor de Aquisição (R$)</Label>
               <Input
-                type="number"
-                step="0.01"
+                type="text"
+                inputMode="decimal"
+                placeholder="0,00"
                 value={form.valor_aquisicao}
-                onChange={(e) => setForm((p) => ({ ...p, valor_aquisicao: e.target.value }))}
+                onChange={(e) => setForm((p) => ({ ...p, valor_aquisicao: formatCurrencyInput(e.target.value) }))}
               />
             </div>
             <div className="space-y-2">
