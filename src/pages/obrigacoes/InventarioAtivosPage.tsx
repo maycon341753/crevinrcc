@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Plus, Pencil, Trash2, Search } from "lucide-react";
+import { Plus, Pencil, Trash2, Search, Download } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -11,6 +11,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { formatBrazilianCurrency, formatBrazilianDate } from "@/lib/utils";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
 type AtivoStatus = "ativo" | "manutencao" | "baixado" | "emprestado";
 type AtivoCondicao = "novo" | "bom" | "regular" | "ruim" | "inservivel";
@@ -132,6 +134,94 @@ export default function InventarioAtivosPage() {
     });
   }, [ativos, search, filterStatus]);
 
+  const exportPdf = () => {
+    const doc = new jsPDF({ unit: "pt", format: "a4", orientation: "landscape" });
+    const pageWidth = doc.internal.pageSize.width;
+
+    doc.setFontSize(18);
+    doc.setTextColor(40, 40, 40);
+    doc.text("Inventário de Ativos", pageWidth / 2, 32, { align: "center" });
+
+    doc.setFontSize(10);
+    doc.setTextColor(100, 100, 100);
+    doc.text(
+      `Gerado em: ${new Date().toLocaleDateString("pt-BR")} às ${new Date().toLocaleTimeString("pt-BR")}`,
+      pageWidth / 2,
+      48,
+      { align: "center" }
+    );
+
+    const fmt = (v: string | null | undefined) => (v && v.trim() ? v : "—");
+    const fmtDate = (d: string | null | undefined) => (d ? formatBrazilianDate(d) : "—");
+    const fmtMoney = (n: number | null | undefined) => (n === null || n === undefined ? "—" : formatBrazilianCurrency(n));
+
+    const body = filteredAtivos.map((a) => [
+      a.patrimonio_numero,
+      a.nome,
+      fmt(a.categoria),
+      fmt(a.localizacao),
+      fmt(a.responsavel),
+      statusLabels[a.status],
+      condicaoLabels[a.condicao],
+      fmtDate(a.data_aquisicao),
+      fmtMoney(a.valor_aquisicao),
+      fmt(a.marca),
+      fmt(a.modelo),
+      fmt(a.numero_serie),
+      fmt(a.observacoes),
+    ]);
+
+    const columnWidths = [52, 90, 58, 60, 60, 48, 48, 48, 48, 48, 48, 54, 90];
+    const tableWidth = columnWidths.reduce((acc, w) => acc + w, 0);
+    const baseMargin = 24;
+    const leftMargin = Math.max(baseMargin, Math.floor((pageWidth - tableWidth) / 2));
+
+    autoTable(doc, {
+      startY: 62,
+      margin: { left: leftMargin, right: baseMargin },
+      head: [[
+        "Patrimônio",
+        "Nome",
+        "Categoria",
+        "Localização",
+        "Responsável",
+        "Status",
+        "Condição",
+        "Aquisição",
+        "Valor",
+        "Marca",
+        "Modelo",
+        "Série",
+        "Obs.",
+      ]],
+      body,
+      theme: "grid",
+      styles: { fontSize: 7, cellPadding: 4, overflow: "linebreak" },
+      headStyles: { fillColor: [66, 66, 66] },
+      columnStyles: {
+        0: { cellWidth: columnWidths[0] },
+        1: { cellWidth: columnWidths[1] },
+        2: { cellWidth: columnWidths[2] },
+        3: { cellWidth: columnWidths[3] },
+        4: { cellWidth: columnWidths[4] },
+        5: { cellWidth: columnWidths[5] },
+        6: { cellWidth: columnWidths[6] },
+        7: { cellWidth: columnWidths[7] },
+        8: { halign: "right", cellWidth: columnWidths[8] },
+        9: { cellWidth: columnWidths[9] },
+        10: { cellWidth: columnWidths[10] },
+        11: { cellWidth: columnWidths[11] },
+        12: { cellWidth: columnWidths[12] },
+      },
+    });
+
+    const today = new Date();
+    const filename = `inventario-ativos-${today.getFullYear()}${String(today.getMonth() + 1).padStart(2, "0")}${String(
+      today.getDate()
+    ).padStart(2, "0")}.pdf`;
+    doc.save(filename);
+  };
+
   const openCreate = () => {
     setEditing(null);
     setForm({ ...emptyForm });
@@ -232,10 +322,16 @@ export default function InventarioAtivosPage() {
           <h1 className="text-2xl font-bold">Inventário de Ativos</h1>
           <p className="text-muted-foreground">Gerencie o patrimônio e bens da instituição</p>
         </div>
-        <Button onClick={openCreate} className="w-full sm:w-auto">
-          <Plus className="h-4 w-4 mr-2" />
-          Novo Ativo
-        </Button>
+        <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+          <Button variant="outline" onClick={exportPdf} className="w-full sm:w-auto">
+            <Download className="h-4 w-4 mr-2" />
+            Gerar PDF
+          </Button>
+          <Button onClick={openCreate} className="w-full sm:w-auto">
+            <Plus className="h-4 w-4 mr-2" />
+            Novo Ativo
+          </Button>
+        </div>
       </div>
 
       <Card className="mb-4">
