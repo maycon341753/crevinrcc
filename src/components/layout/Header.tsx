@@ -24,8 +24,8 @@ export function Header() {
         <SidebarTrigger className="hover:bg-accent" />
         
         <div className="flex items-center gap-2">
-          <div className="h-8 w-8 rounded-lg bg-gradient-primary flex items-center justify-center">
-            <span className="text-white font-bold text-sm">C</span>
+          <div className="relative h-8 w-8 rounded-lg bg-gradient-primary overflow-hidden">
+            <img src="/logocrevin.ico" alt="CREVIN" className="absolute inset-0 h-full w-full object-contain p-0" />
           </div>
           <div className="flex flex-col">
             <h1 className="text-lg font-bold text-primary">CREVIN</h1>
