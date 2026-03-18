@@ -20,6 +20,7 @@ type AtivoCondicao = "novo" | "bom" | "regular" | "ruim" | "inservivel";
 type AtivoInventario = {
   id: string;
   patrimonio_numero: string;
+  numero_registro: string | null;
   nome: string;
   categoria: string | null;
   localizacao: string | null;
@@ -67,6 +68,7 @@ function condicaoBadgeVariant(condicao: AtivoCondicao) {
 
 const emptyForm = {
   patrimonio_numero: "",
+  numero_registro: "",
   nome: "",
   categoria: "",
   localizacao: "",
@@ -259,6 +261,7 @@ export default function InventarioAtivosPage() {
     setEditing(a);
     setForm({
       patrimonio_numero: a.patrimonio_numero ?? "",
+      numero_registro: a.numero_registro ?? "",
       nome: a.nome ?? "",
       categoria: a.categoria ?? "",
       localizacao: a.localizacao ?? "",
@@ -366,6 +369,7 @@ export default function InventarioAtivosPage() {
 
       const payload = {
         patrimonio_numero,
+        numero_registro: (form.numero_registro || "").trim() || null,
         nome,
         categoria: (form.categoria || "").trim() || null,
         localizacao: (form.localizacao || "").trim() || null,
@@ -716,6 +720,10 @@ export default function InventarioAtivosPage() {
             <div className="space-y-2">
               <Label>Patrimônio</Label>
               <Input value={form.patrimonio_numero} onChange={(e) => setForm((p) => ({ ...p, patrimonio_numero: e.target.value }))} />
+            </div>
+            <div className="space-y-2">
+              <Label>Número de Registro</Label>
+              <Input value={form.numero_registro} onChange={(e) => setForm((p) => ({ ...p, numero_registro: e.target.value }))} />
             </div>
             <div className="space-y-2">
               <Label>Nome</Label>
