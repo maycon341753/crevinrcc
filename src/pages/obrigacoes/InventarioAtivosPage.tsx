@@ -184,6 +184,7 @@ export default function InventarioAtivosPage() {
 
     const body = filteredAtivos.map((a) => [
       a.patrimonio_numero,
+      fmt(a.numero_registro),
       a.nome,
       fmt(a.categoria),
       fmt(a.localizacao),
@@ -198,7 +199,7 @@ export default function InventarioAtivosPage() {
       fmt(a.observacoes),
     ]);
 
-    const columnWidths = [52, 90, 58, 60, 60, 48, 48, 48, 48, 48, 48, 54, 90];
+    const columnWidths = [52, 60, 90, 58, 60, 60, 48, 48, 48, 48, 48, 48, 54, 90];
     const tableWidth = columnWidths.reduce((acc, w) => acc + w, 0);
     const leftMargin = Math.max(baseMargin, Math.floor((pageWidth - tableWidth) / 2));
 
@@ -207,6 +208,7 @@ export default function InventarioAtivosPage() {
       margin: { left: leftMargin, right: baseMargin, bottom: 30 },
       head: [[
         "Patrimônio",
+        "Número de Registro",
         "Nome",
         "Categoria",
         "Localização",
@@ -236,11 +238,12 @@ export default function InventarioAtivosPage() {
         5: { cellWidth: columnWidths[5] },
         6: { cellWidth: columnWidths[6] },
         7: { cellWidth: columnWidths[7] },
-        8: { halign: "right", cellWidth: columnWidths[8] },
+        8: { cellWidth: columnWidths[8] },
         9: { cellWidth: columnWidths[9] },
-        10: { cellWidth: columnWidths[10] },
+        10: { halign: "right", cellWidth: columnWidths[10] },
         11: { cellWidth: columnWidths[11] },
         12: { cellWidth: columnWidths[12] },
+        13: { cellWidth: columnWidths[13] },
       },
     });
 
@@ -642,6 +645,10 @@ export default function InventarioAtivosPage() {
               <div>
                 <div className="text-xs text-muted-foreground">Patrimônio</div>
                 <div className="font-mono text-sm">{detailsTarget.patrimonio_numero}</div>
+              </div>
+              <div>
+                <div className="text-xs text-muted-foreground">Número de Registro</div>
+                <div className="text-sm">{detailsTarget.numero_registro || "—"}</div>
               </div>
               <div>
                 <div className="text-xs text-muted-foreground">Nome</div>
