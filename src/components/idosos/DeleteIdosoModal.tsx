@@ -24,7 +24,22 @@ export function DeleteIdosoModal({ open, onClose, idoso }: DeleteIdosoModalProps
         .delete()
         .eq('id', idoso.id);
 
-      if (error) throw error;
+      if (error) {
+        const { error: softDeleteError } = await supabase
+          .from('idosos')
+          .update({ ativo: false })
+          .eq('id', idoso.id);
+
+        if (softDeleteError) throw error;
+
+        toast({
+          title: "Sucesso",
+          description: "Idoso inativado com sucesso!",
+        });
+
+        onClose();
+        return;
+      }
 
       toast({
         title: "Sucesso",
@@ -45,7 +60,12 @@ export function DeleteIdosoModal({ open, onClose, idoso }: DeleteIdosoModalProps
   };
 
   return (
-    <Dialog open={open} onOpenChange={onClose}>
+    <Dialog
+      open={open}
+      onOpenChange={(v) => {
+        if (!v) onClose();
+      }}
+    >
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Confirmar Exclusão</DialogTitle>
