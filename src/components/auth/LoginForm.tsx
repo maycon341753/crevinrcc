@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -71,9 +72,13 @@ export function LoginForm() {
   return (
     <Card className="w-full max-w-md crevin-card">
       <CardHeader className="space-y-2 text-center">
-        <div className="relative mx-auto h-20 w-20 rounded-lg bg-gradient-primary overflow-hidden mb-4">
+        <Link
+          to="/institucional"
+          className="relative mx-auto mb-4 block h-20 w-20 overflow-hidden rounded-lg bg-gradient-primary"
+          aria-label="Ir para a página institucional"
+        >
           <img src="/logocrevin.ico" alt="CREVIN" className="absolute inset-0 h-full w-full object-contain p-0" />
-        </div>
+        </Link>
         <CardTitle className="text-2xl font-bold text-primary">
           Sistema Gestão CREVIN
         </CardTitle>

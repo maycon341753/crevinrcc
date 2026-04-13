@@ -56,6 +56,7 @@ import NotFound from "./pages/NotFound";
 import LicencasFuncionamentoPage from "./pages/obrigacoes/LicencasFuncionamentoPage";
 import InventarioAtivosPage from "./pages/obrigacoes/InventarioAtivosPage";
 import Perfil from "./pages/Perfil";
+import InstitucionalPage from "./pages/Index";
 
 const queryClient = new QueryClient();
 
@@ -122,6 +123,7 @@ const App = () => (
                 </PublicRoute>
               } 
             />
+            <Route path="/institucional" element={<InstitucionalPage />} />
 
             {/* Protected Routes */}
             <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
