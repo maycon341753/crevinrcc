@@ -1127,16 +1127,6 @@ export default function ProntuarioNutricional() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <Label htmlFor="observacoes">OBSERVAÇÕES</Label>
-                <Textarea
-                  id="observacoes"
-                  value={prontuario.observacoes}
-                  onChange={(e) => handleInputChange('observacoes', e.target.value)}
-                  rows={4}
-                />
-              </div>
-
-              <div>
                 <Label htmlFor="evolucao_nutricional">Evolução nutricional</Label>
                 <Textarea
                   id="evolucao_nutricional"
@@ -1144,37 +1134,6 @@ export default function ProntuarioNutricional() {
                   onChange={(e) => handleInputChange('evolucao_nutricional', e.target.value)}
                   rows={6}
                   placeholder="Idoso(a) de __ anos, cadeirante ou deambula com auxílio, diagnosticado(a) com ___. Encontra-se em BEG (bom estado geral) / REG (regular estado geral), colaborativo(a) e respirando em ar ambiente..."
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="diagnostico_nutricional">Diagnóstico Nutricional</Label>
-                <Textarea
-                  id="diagnostico_nutricional"
-                  value={prontuario.diagnostico_nutricional}
-                  onChange={(e) => handleInputChange('diagnostico_nutricional', e.target.value)}
-                  rows={3}
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="conduta_dietetica">Conduta Dietética</Label>
-                <Textarea
-                  id="conduta_dietetica"
-                  value={prontuario.conduta_dietetica}
-                  onChange={(e) => handleInputChange('conduta_dietetica', e.target.value)}
-                  rows={3}
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="prescricao_dietetica">Prescrição Dietética</Label>
-                <Textarea
-                  id="prescricao_dietetica"
-                  value={prontuario.prescricao_dietetica}
-                  onChange={(e) => handleInputChange('prescricao_dietetica', e.target.value)}
-                  rows={4}
-                  placeholder="Dieta por via oral, de consistência (normal/branda/pastosa), característica (hipossódica, controle glicêmico, laxativa) fracionada em 6 refeições/dia, conforme padrão institucional."
                 />
               </div>
             </CardContent>
