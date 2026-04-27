@@ -85,7 +85,7 @@ const MovimentoCaixaPage: React.FC = () => {
     try {
       setLoading(true);
       const [catRes, movRes, histRes] = await Promise.all([
-        supabase.from('cash_categories').select('*').eq('active', true).order('name'),
+        supabase.from('cash_categories').select('*').order('name'),
         supabase.from('cash_movements').select('*').gte('movement_date', fromDate).order('movement_date', { ascending: true }).order('created_at', { ascending: true }),
         supabase.from('cash_movements').select('*').lt('movement_date', fromDate)
       ]);
@@ -148,6 +148,32 @@ const MovimentoCaixaPage: React.FC = () => {
     (categories || []).forEach((c) => map.set(c.id, c.name));
     return map;
   }, [categories]);
+
+  const activeCategories = useMemo(() => {
+    return (categories || []).filter((c) => c.active);
+  }, [categories]);
+
+  const deleteCategory = async (categoryId: string) => {
+    const category = categories.find((c) => c.id === categoryId);
+    const ok = window.confirm(`Excluir categoria "${category?.name ?? ''}"?`);
+    if (!ok) return;
+
+    try {
+      const { error } = await supabase
+        .from('cash_categories')
+        .update({ active: false })
+        .eq('id', categoryId);
+      if (error) throw error;
+
+      setCategories((prev) => prev.map((c) => (c.id === categoryId ? { ...c, active: false } : c)));
+      if (newCategory === categoryId) setNewCategory(undefined);
+      if (editCategory === categoryId) setEditCategory(undefined);
+
+      toast.success('Categoria excluída');
+    } catch {
+      toast.error('Erro ao excluir categoria');
+    }
+  };
 
   const openHistoryDetails = async (key: string) => {
     try {
@@ -819,7 +845,7 @@ const MovimentoCaixaPage: React.FC = () => {
                       <CommandEmpty>Nenhuma categoria encontrada.</CommandEmpty>
                       <CommandList>
                         <CommandGroup>
-                          {categories.map(c => (
+                          {activeCategories.map(c => (
                             <CommandItem
                               key={c.id}
                               value={c.name}
@@ -828,7 +854,22 @@ const MovimentoCaixaPage: React.FC = () => {
                                 setOpenEditCategoryPicker(false);
                               }}
                             >
-                              {c.name}
+                              <div className="flex w-full items-center justify-between gap-2">
+                                <span className="truncate">{c.name}</span>
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-8 w-8 p-0"
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    deleteCategory(c.id);
+                                  }}
+                                >
+                                  <Trash2 className="h-4 w-4 text-destructive" />
+                                </Button>
+                              </div>
                             </CommandItem>
                           ))}
                         </CommandGroup>
