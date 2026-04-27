@@ -35,6 +35,8 @@ interface CashMovement {
   created_at: string;
 }
 
+type CashMovementWithSaldo = CashMovement & { saldo: number };
+
 const MovimentoCaixaPage: React.FC = () => {
   const [fromDate, setFromDate] = useState<string>(() => {
     const d = new Date();
@@ -77,6 +79,7 @@ const MovimentoCaixaPage: React.FC = () => {
   const [detailRows, setDetailRows] = useState<Array<CashMovement & { saldo: number }>>([]);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
+  const [generatingPdfKey, setGeneratingPdfKey] = useState<string | null>(null);
 
   const fetchData = async () => {
     try {
@@ -181,18 +184,37 @@ const MovimentoCaixaPage: React.FC = () => {
     }
   };
 
-  const gerarPDF = (start: Date, end: Date) => {
-    const startDay = new Date(start.getFullYear(), start.getMonth(), start.getDate());
-    const endDay = new Date(end.getFullYear(), end.getMonth(), end.getDate(), 23, 59, 59, 999);
-    const parseLocalDate = (isoDate: string) => {
-      let [yy, mm, dd] = isoDate.split('-').map(Number);
-      if (yy > 2099) yy = start.getFullYear();
-      return new Date(yy, (mm || 1) - 1, dd || 1);
-    };
-    const filtered = rows.filter(r => {
-      const rd = parseLocalDate(r.movement_date);
-      return rd >= startDay && rd <= endDay;
+  const fetchMovementsForRange = async (start: Date, end: Date): Promise<CashMovementWithSaldo[]> => {
+    const startStr = format(start, 'yyyy-MM-dd');
+    const endStr = format(end, 'yyyy-MM-dd');
+    const { data, error } = await supabase
+      .from('cash_movements')
+      .select('*')
+      .gte('movement_date', startStr)
+      .lte('movement_date', endStr)
+      .order('movement_date', { ascending: true })
+      .order('created_at', { ascending: true });
+    if (error) throw error;
+
+    let running = 0;
+    const list = ((data || []) as CashMovement[]).filter((m) => (m as any).source === 'manual');
+    return list.map((m) => {
+      running += (m.entrada || 0) - (m.saida || 0);
+      return { ...m, saldo: running };
     });
+  };
+
+  const gerarPDF = (start: Date, end: Date, list?: CashMovementWithSaldo[]) => {
+    const filtered = (list ?? rows).filter((r) => {
+      const movementDate = r.movement_date;
+      if (/^\d{4}-\d{2}-\d{2}$/.test(movementDate)) {
+        const [year, month, day] = movementDate.split('-').map(Number);
+        const dt = new Date(year, (month || 1) - 1, day || 1);
+        return dt >= start && dt <= end;
+      }
+      return true;
+    });
+
     const totalEntrada = filtered.reduce((s, r) => s + (r.entrada || 0), 0);
     const totalSaida = filtered.reduce((s, r) => s + (r.saida || 0), 0);
     const saldoPeriodo = totalEntrada - totalSaida;
@@ -202,19 +224,24 @@ const MovimentoCaixaPage: React.FC = () => {
     const marginLeft = 40;
     const marginRight = 40;
     const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
     const usableWidth = pageWidth - marginLeft - marginRight;
+    const crevinName = 'CREVIN - Lar dos Idosos';
+    const crevinAddress = 'St. Tradicional Q 63 lt 12 - Planaltina, Brasília - DF, 73330-630';
+    const crevinPhone = 'Telefone: (61) 3389-9448';
 
+    doc.setFontSize(12);
+    doc.text(crevinName, marginLeft, 26);
     doc.setFontSize(18);
-    doc.text('Movimento de Caixa', marginLeft, 40);
+    doc.text('Movimento de Caixa', marginLeft, 50);
     doc.setFontSize(11);
-    doc.text(`Período: ${format(start, 'dd/MM/yyyy')} - ${format(end, 'dd/MM/yyyy')}`, marginLeft, 60);
+    doc.text(`Período: ${format(start, 'dd/MM/yyyy')} - ${format(end, 'dd/MM/yyyy')}`, marginLeft, 70);
     doc.setDrawColor(50, 50, 50);
-    doc.line(marginLeft, 68, pageWidth - marginRight, 68);
+    doc.line(marginLeft, 78, pageWidth - marginRight, 78);
 
         const formatDateForPdf = (isoDate: string) => {
       const parts = (isoDate || '').split('-');
       let y = Number(parts[0] || 0);
-      if (y > 2099) y = start.getFullYear();
       const m = Number(parts[1] || 1);
       const d = Number(parts[2] || 1);
       const dt = new Date(y, (m || 1) - 1, d || 1);
@@ -227,13 +254,13 @@ const MovimentoCaixaPage: React.FC = () => {
       r.category_id ? (categoryMap.get(r.category_id) || 'Sem categoria') : 'Sem categoria',
       r.entrada ? formatBrazilianCurrency(r.entrada) : '-',
       r.saida ? formatBrazilianCurrency(r.saida) : '-',
-      formatBrazilianCurrency((r as any).saldo),
+      formatBrazilianCurrency((r as any).saldo ?? 0),
     ]);
 
     autoTable(doc, {
       head: [['Data', 'Categoria', 'Entrada', 'Saída', 'Saldo']],
       body,
-      startY: 85,
+      startY: 95,
       styles: { fontSize: 9, cellPadding: 5, overflow: 'linebreak' },
       headStyles: { fillColor: [33, 82, 255] },
       margin: { left: marginLeft, right: marginRight },
@@ -248,8 +275,16 @@ const MovimentoCaixaPage: React.FC = () => {
       didDrawPage: () => {
         const page = doc.getCurrentPageInfo().pageNumber;
         const pageCount = (doc as any).getNumberOfPages();
+        doc.setDrawColor(220, 220, 220);
+        doc.line(marginLeft, pageHeight - 44, pageWidth - marginRight, pageHeight - 44);
+
         doc.setFontSize(8);
-        doc.text(`Página ${page} de ${pageCount}`, marginLeft, 820);
+        doc.setTextColor(90, 90, 90);
+        doc.text(crevinName, marginLeft, pageHeight - 30);
+        doc.text(crevinAddress, marginLeft, pageHeight - 18, { maxWidth: usableWidth });
+        doc.text(crevinPhone, marginLeft, pageHeight - 8);
+        doc.text(`Página ${page} de ${pageCount}`, pageWidth - marginRight, pageHeight - 8, { align: 'right' });
+        doc.setTextColor(0, 0, 0);
       },
     });
 
@@ -275,6 +310,32 @@ const MovimentoCaixaPage: React.FC = () => {
 
     const filename = `movimento-caixa-${format(start, 'yyyyMMdd')}-a-${format(end, 'yyyyMMdd')}.pdf`;
     doc.save(filename);
+  };
+
+  const gerarPDFMensal = () => {
+    const y = Number(fromDate.slice(0, 4));
+    const m = Number(fromDate.slice(5, 7)) - 1;
+    const start = new Date(y, m, 1);
+    const end = new Date(y, m + 1, 0);
+    gerarPDF(start, end);
+  };
+
+  const gerarPDFDoMesKey = async (key: string) => {
+    const [yStr, mStr] = key.split('-');
+    const y = Number(yStr);
+    const m = Number(mStr);
+    const start = new Date(y, (m || 1) - 1, 1);
+    const end = new Date(y, m || 1, 0);
+
+    try {
+      setGeneratingPdfKey(key);
+      const list = await fetchMovementsForRange(start, end);
+      gerarPDF(start, end, list);
+    } catch {
+      toast.error('Erro ao gerar PDF do mês');
+    } finally {
+      setGeneratingPdfKey(null);
+    }
   };
 
   const onCreate = async () => {
@@ -446,7 +507,11 @@ const MovimentoCaixaPage: React.FC = () => {
                     <td className="px-6 py-3 text-sm text-right text-red-700">{formatBrazilianCurrency(h.saida)}</td>
                     <td className={`px-6 py-3 text-sm text-right ${h.saldo >= 0 ? 'text-green-700' : 'text-red-700'}`}>{formatBrazilianCurrency(h.saldo)}</td>
                     <td className="px-6 py-3 text-sm text-right">
-                      <div className="flex justify-end">
+                      <div className="flex justify-end gap-2">
+                        <Button variant="ghost" size="sm" onClick={() => gerarPDFDoMesKey(h.key)} disabled={generatingPdfKey === h.key}>
+                          <FileText className="w-4 h-4" />
+                          <span className="sr-only">Gerar PDF do mês</span>
+                        </Button>
                         <Button variant="ghost" size="sm" onClick={() => openHistoryDetails(h.key)}>
                           <Search className="w-4 h-4" />
                         </Button>
