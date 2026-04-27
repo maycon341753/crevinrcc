@@ -720,7 +720,7 @@ const MovimentoCaixaPage: React.FC = () => {
                       <CommandEmpty>Nenhuma categoria encontrada.</CommandEmpty>
                       <CommandList>
                         <CommandGroup>
-                          {categories.map(c => (
+                          {activeCategories.map(c => (
                             <CommandItem
                               key={c.id}
                               value={c.name}
@@ -729,7 +729,22 @@ const MovimentoCaixaPage: React.FC = () => {
                                 setOpenCategoryPicker(false);
                               }}
                             >
-                              {c.name}
+                              <div className="flex w-full items-center justify-between gap-2">
+                                <span className="truncate">{c.name}</span>
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-8 w-8 p-0"
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    deleteCategory(c.id);
+                                  }}
+                                >
+                                  <Trash2 className="h-4 w-4 text-destructive" />
+                                </Button>
+                              </div>
                             </CommandItem>
                           ))}
                         </CommandGroup>
