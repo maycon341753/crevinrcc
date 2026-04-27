@@ -79,6 +79,8 @@ const MovimentoCaixaPage: React.FC = () => {
   const [detailRows, setDetailRows] = useState<Array<CashMovement & { saldo: number }>>([]);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
+  const [deleteCategoryConfirmOpen, setDeleteCategoryConfirmOpen] = useState(false);
+  const [deleteCategoryTargetId, setDeleteCategoryTargetId] = useState<string | null>(null);
   const [generatingPdfKey, setGeneratingPdfKey] = useState<string | null>(null);
 
   const fetchData = async () => {
@@ -154,25 +156,10 @@ const MovimentoCaixaPage: React.FC = () => {
   }, [categories]);
 
   const deleteCategory = async (categoryId: string) => {
-    const category = categories.find((c) => c.id === categoryId);
-    const ok = window.confirm(`Excluir categoria "${category?.name ?? ''}"?`);
-    if (!ok) return;
-
-    try {
-      const { error } = await supabase
-        .from('cash_categories')
-        .update({ active: false })
-        .eq('id', categoryId);
-      if (error) throw error;
-
-      setCategories((prev) => prev.map((c) => (c.id === categoryId ? { ...c, active: false } : c)));
-      if (newCategory === categoryId) setNewCategory(undefined);
-      if (editCategory === categoryId) setEditCategory(undefined);
-
-      toast.success('Categoria excluída');
-    } catch {
-      toast.error('Erro ao excluir categoria');
-    }
+    setDeleteCategoryTargetId(categoryId);
+    setDeleteCategoryConfirmOpen(true);
+    setOpenCategoryPicker(false);
+    setOpenEditCategoryPicker(false);
   };
 
   const openHistoryDetails = async (key: string) => {
@@ -995,6 +982,57 @@ const MovimentoCaixaPage: React.FC = () => {
                   setDeleteConfirmOpen(false);
                   setDeleteTargetId(null);
                   await fetchData();
+                }
+              }}
+            >
+              Excluir
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={deleteCategoryConfirmOpen} onOpenChange={setDeleteCategoryConfirmOpen}>
+        <DialogContent className="sm:max-w-[420px]">
+          <DialogHeader>
+            <DialogTitle>Confirmar exclusão</DialogTitle>
+          </DialogHeader>
+          <div className="py-2 text-sm text-gray-600">
+            Tem certeza que deseja excluir a categoria{' '}
+            <span className="font-medium text-gray-900">
+              {deleteCategoryTargetId ? (categories.find((c) => c.id === deleteCategoryTargetId)?.name || '') : ''}
+            </span>
+            ? Esta ação não pode ser desfeita.
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setDeleteCategoryConfirmOpen(false);
+                setDeleteCategoryTargetId(null);
+              }}
+            >
+              Cancelar
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={async () => {
+                if (!deleteCategoryTargetId) return;
+                try {
+                  const { error } = await supabase
+                    .from('cash_categories')
+                    .update({ active: false })
+                    .eq('id', deleteCategoryTargetId);
+                  if (error) throw error;
+
+                  setCategories((prev) => prev.map((c) => (c.id === deleteCategoryTargetId ? { ...c, active: false } : c)));
+                  if (newCategory === deleteCategoryTargetId) setNewCategory(undefined);
+                  if (editCategory === deleteCategoryTargetId) setEditCategory(undefined);
+
+                  toast.success('Categoria excluída');
+                  setDeleteCategoryConfirmOpen(false);
+                  setDeleteCategoryTargetId(null);
+                } catch {
+                  toast.error('Erro ao excluir categoria');
                 }
               }}
             >
