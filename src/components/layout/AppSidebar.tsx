@@ -75,6 +75,7 @@ const navigationItems = [
     icon: Heart,
     subItems: [
       { title: "Lista de Idosos", url: "/idosos" },
+      { title: "Idosos Inativos", url: "/idosos/inativos" },
       { title: "Cadastrar Idoso", url: "/idosos/novo" },
       { title: "Lista de Espera", url: "/idosos/lista-espera" },
       { title: "Quartos/Alas", url: "/idosos/quartos" },
