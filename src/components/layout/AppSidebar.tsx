@@ -87,6 +87,11 @@ const navigationItems = [
     ],
   },
   {
+    title: "Terceirizados",
+    url: "/terceirizados",
+    icon: Users,
+  },
+  {
     title: "Financeiro",
     url: "/financeiro",
     icon: DollarSign,
