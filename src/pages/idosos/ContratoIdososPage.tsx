@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Download, Eye, Search, Upload, Trash2 } from "lucide-react";
+import { Download, Edit, Eye, Search, Upload, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -11,6 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { formatBrazilianCurrency } from "@/lib/utils";
 import { Idoso } from "@/types";
 import { useAuth } from "@/hooks/useAuth";
+import { EditIdosoModal } from "@/components/idosos/EditIdosoModal";
 
 type ContratoDoc = {
   id: string;
@@ -30,6 +31,8 @@ export default function ContratoIdososPage() {
   const [uploadingId, setUploadingId] = useState<string | null>(null);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<ContratoDoc | null>(null);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [selectedIdoso, setSelectedIdoso] = useState<Idoso | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const { toast } = useToast();
@@ -110,6 +113,11 @@ export default function ContratoIdososPage() {
   const openFilePicker = (idosoId: string) => {
     setUploadingId(idosoId);
     fileInputRef.current?.click();
+  };
+
+  const handleEditIdoso = (idoso: Idoso) => {
+    setSelectedIdoso(idoso);
+    setShowEditModal(true);
   };
 
   const removeContrato = async (doc: ContratoDoc, silent?: boolean) => {
@@ -331,6 +339,15 @@ export default function ContratoIdososPage() {
                               variant="outline"
                               size="sm"
                               className="h-9 w-9 p-0"
+                              onClick={() => handleEditIdoso(idoso)}
+                              title="Editar"
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="h-9 w-9 p-0"
                               onClick={() => doc && viewContrato(doc)}
                               disabled={!doc}
                               title="Ver"
@@ -403,6 +420,18 @@ export default function ContratoIdososPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {selectedIdoso && (
+        <EditIdosoModal
+          open={showEditModal}
+          onClose={() => {
+            setShowEditModal(false);
+            setSelectedIdoso(null);
+            fetchData();
+          }}
+          idoso={selectedIdoso}
+        />
+      )}
     </div>
   );
 }
