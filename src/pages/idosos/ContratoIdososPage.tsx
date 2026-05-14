@@ -367,16 +367,16 @@ export default function ContratoIdososPage() {
                             <Button
                               variant="outline"
                               size="sm"
-                              className="h-9 w-9 p-0"
                               onClick={() => {
                                 if (!doc) return;
                                 setDeleteTarget(doc);
                                 setDeleteOpen(true);
                               }}
                               disabled={!doc}
-                              title="Excluir"
+                              title="Remover upload"
                             >
                               <Trash2 className="h-4 w-4 text-destructive" />
+                              Remover upload
                             </Button>
                           </div>
                         </TableCell>
@@ -393,9 +393,9 @@ export default function ContratoIdososPage() {
       <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
         <DialogContent className="sm:max-w-[420px]">
           <DialogHeader>
-            <DialogTitle>Confirmar exclusão</DialogTitle>
+            <DialogTitle>Confirmar remoção</DialogTitle>
           </DialogHeader>
-          <div className="py-2 text-sm text-gray-600">Tem certeza que deseja excluir este contrato?</div>
+          <div className="py-2 text-sm text-gray-600">Tem certeza que deseja remover o upload deste contrato?</div>
           <DialogFooter>
             <Button
               variant="outline"
@@ -415,7 +415,7 @@ export default function ContratoIdososPage() {
                 setDeleteTarget(null);
               }}
             >
-              Excluir
+              Remover
             </Button>
           </DialogFooter>
         </DialogContent>

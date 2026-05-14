@@ -64,6 +64,19 @@ export default function TerceirizadoPage() {
   const { toast } = useToast();
   const { user } = useAuth();
 
+  const formatTelefoneInput = (value: string) => {
+    const digits = value.replace(/\D/g, "").slice(0, 11);
+    if (digits.length === 0) return "";
+    if (digits.length <= 2) return `(${digits}`;
+    if (digits.length <= 6) return `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
+    if (digits.length <= 10) return `(${digits.slice(0, 2)}) ${digits.slice(2, 6)}-${digits.slice(6)}`;
+    return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
+  };
+
+  const sanitizeEmailInput = (value: string) => {
+    return value.replace(/\s+/g, "").toLowerCase();
+  };
+
   const fetchData = useCallback(async () => {
     try {
       setLoading(true);
@@ -385,11 +398,23 @@ export default function TerceirizadoPage() {
             </div>
             <div className="space-y-2">
               <Label>Telefone</Label>
-              <Input value={telefone} onChange={(e) => setTelefone(e.target.value)} placeholder="(00) 00000-0000" />
+              <Input
+                value={telefone}
+                inputMode="tel"
+                onChange={(e) => setTelefone(formatTelefoneInput(e.target.value))}
+                placeholder="(00) 00000-0000"
+              />
             </div>
             <div className="space-y-2 md:col-span-2">
               <Label>Email</Label>
-              <Input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="email@exemplo.com" />
+              <Input
+                value={email}
+                type="email"
+                inputMode="email"
+                autoCapitalize="none"
+                onChange={(e) => setEmail(sanitizeEmailInput(e.target.value))}
+                placeholder="email@exemplo.com"
+              />
             </div>
             <div className="md:col-span-2 flex items-end justify-end">
               <Button onClick={createVoluntario} disabled={creating}>
@@ -576,12 +601,24 @@ export default function TerceirizadoPage() {
               </div>
               <div className="space-y-2">
                 <Label>Telefone</Label>
-                <Input value={editTelefone} onChange={(e) => setEditTelefone(e.target.value)} placeholder="(00) 00000-0000" />
+                <Input
+                  value={editTelefone}
+                  inputMode="tel"
+                  onChange={(e) => setEditTelefone(formatTelefoneInput(e.target.value))}
+                  placeholder="(00) 00000-0000"
+                />
               </div>
             </div>
             <div className="space-y-2">
               <Label>Email</Label>
-              <Input value={editEmail} onChange={(e) => setEditEmail(e.target.value)} placeholder="email@exemplo.com" />
+              <Input
+                value={editEmail}
+                type="email"
+                inputMode="email"
+                autoCapitalize="none"
+                onChange={(e) => setEditEmail(sanitizeEmailInput(e.target.value))}
+                placeholder="email@exemplo.com"
+              />
             </div>
           </div>
           <DialogFooter>
