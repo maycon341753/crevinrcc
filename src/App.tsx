@@ -26,6 +26,7 @@ import DoacoesRelatoriosPage from "./pages/doacoes/DoacoesRelatoriosPage";
 import DoacoesItensPage from "./pages/doacoes/DoacoesItensPage";
 import IdososPage from "./pages/idosos/IdososPage";
 import IdososInativosPage from "./pages/idosos/IdososInativosPage";
+import ContratoIdososPage from "./pages/idosos/ContratoIdososPage";
 import QuartosPage from "./pages/idosos/QuartosPage";
 import MedicoPage from "./pages/idosos/MedicoPage";
 import { NovoIdosoPage } from "./pages/idosos/NovoIdosoPage";
@@ -201,6 +202,7 @@ const App = () => (
             } />
             <Route path="/idosos" element={<ProtectedRoute><IdososPage /></ProtectedRoute>} />
             <Route path="/idosos/inativos" element={<ProtectedRoute><IdososInativosPage /></ProtectedRoute>} />
+            <Route path="/idosos/contratos" element={<ProtectedRoute><ContratoIdososPage /></ProtectedRoute>} />
             <Route path="/idosos/novo" element={<ProtectedRoute><NovoIdosoPage /></ProtectedRoute>} />
             <Route path="/idosos/lista-espera" element={<ProtectedRoute><ListaEsperaPage /></ProtectedRoute>} />
             <Route path="/idosos/quartos" element={<ProtectedRoute><QuartosPage /></ProtectedRoute>} />
