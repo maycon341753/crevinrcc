@@ -155,6 +155,21 @@ export const isValidBrazilianSalary = (value: string): boolean => {
 };
 
 // Função para formatar data no padrão brasileiro DD/MM/AAAA
+export const parseISOToLocalDate = (isoDate: string): Date | null => {
+  if (!isoDate || !/^\d{4}-\d{2}-\d{2}$/.test(isoDate)) return null;
+  const [year, month, day] = isoDate.split('-').map(Number);
+  return new Date(year, month - 1, day);
+};
+
+// Função para formatar uma data local como ISO (YYYY-MM-DD)
+export const formatLocalDateToISO = (date: Date): string => {
+  if (!date || isNaN(date.getTime())) return '';
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
 export const formatBrazilianDate = (date: string | Date): string => {
   if (!date) return '';
   
@@ -250,4 +265,22 @@ export const parseBrazilianDate = (dateString: string): string => {
   }
   
   return dateString;
+};
+
+// Função para calcular idade a partir de uma data de nascimento (ISO)
+export const calculateAge = (birthDate: string): number => {
+  if (!birthDate) return 0;
+  
+  const today = new Date();
+  const birth = parseISOToLocalDate(birthDate);
+  if (!birth) return 0;
+  
+  let age = today.getFullYear() - birth.getFullYear();
+  const monthDiff = today.getMonth() - birth.getMonth();
+  
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+    age--;
+  }
+  
+  return age;
 };

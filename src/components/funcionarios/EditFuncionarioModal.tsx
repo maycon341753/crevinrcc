@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/select";
 import { Funcionario } from "@/types";
 import { Edit } from "lucide-react";
-import { formatCPF, formatPhone, formatBrazilianSalary, parseBrazilianSalary, isValidBrazilianSalary, formatCurrencyInput } from "@/lib/utils";
+import { formatCPF, formatPhone, formatBrazilianSalary, parseBrazilianSalary, isValidBrazilianSalary, formatCurrencyInput, parseISOToLocalDate, formatLocalDateToISO } from "@/lib/utils";
 import DateInput from '@/components/ui/date-input';
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -108,9 +108,9 @@ export function EditFuncionarioModal({
       let dataAdmissaoFormatada = "";
       if (funcionario.data_admissao) {
         try {
-          const date = new Date(funcionario.data_admissao);
-          if (!isNaN(date.getTime())) {
-            dataAdmissaoFormatada = date.toISOString().split('T')[0];
+          const date = parseISOToLocalDate(funcionario.data_admissao);
+          if (date) {
+            dataAdmissaoFormatada = formatLocalDateToISO(date);
           }
         } catch (error) {
           console.error('Erro ao formatar data de admissão:', error);
@@ -121,9 +121,9 @@ export function EditFuncionarioModal({
       let dataNascimentoFormatada = "";
       if (funcionario.data_nascimento) {
         try {
-          const date = new Date(funcionario.data_nascimento);
-          if (!isNaN(date.getTime())) {
-            dataNascimentoFormatada = date.toISOString().split('T')[0];
+          const date = parseISOToLocalDate(funcionario.data_nascimento);
+          if (date) {
+            dataNascimentoFormatada = formatLocalDateToISO(date);
           }
         } catch (error) {
           console.error('Erro ao formatar data de nascimento:', error);
@@ -246,11 +246,11 @@ export function EditFuncionarioModal({
       // Processar data de admissão
       let dataAdmissaoFormatada: string;
       try {
-        const date = new Date(formData.data_admissao);
-        if (isNaN(date.getTime())) {
+        const date = parseISOToLocalDate(formData.data_admissao);
+        if (!date) {
           throw new Error('Data inválida');
         }
-        dataAdmissaoFormatada = date.toISOString().split('T')[0];
+        dataAdmissaoFormatada = formatLocalDateToISO(date);
       } catch (error) {
         toast.error('Data de admissão inválida');
         return;
@@ -260,11 +260,11 @@ export function EditFuncionarioModal({
       let dataNascimentoFormatada: string | null = null;
       if (formData.data_nascimento) {
         try {
-          const date = new Date(formData.data_nascimento);
-          if (isNaN(date.getTime())) {
+          const date = parseISOToLocalDate(formData.data_nascimento);
+          if (!date) {
             throw new Error('Data inválida');
           }
-          dataNascimentoFormatada = date.toISOString().split('T')[0];
+          dataNascimentoFormatada = formatLocalDateToISO(date);
         } catch (error) {
           toast.error('Data de nascimento inválida');
           return;

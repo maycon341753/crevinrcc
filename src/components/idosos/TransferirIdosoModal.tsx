@@ -15,6 +15,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2, UserCheck } from "lucide-react";
+import { parseISOToLocalDate } from "@/lib/utils";
 
 interface ListaEsperaIdoso {
   id: string;
@@ -160,7 +161,7 @@ export function TransferirIdosoModal({
               <div>
                 <Label className="text-xs text-muted-foreground">Data de Nascimento</Label>
                 <p className="font-medium">
-                  {new Date(idoso.data_nascimento).toLocaleDateString('pt-BR')}
+                  {parseISOToLocalDate(idoso.data_nascimento)?.toLocaleDateString('pt-BR') || idoso.data_nascimento}
                 </p>
               </div>
               <div>

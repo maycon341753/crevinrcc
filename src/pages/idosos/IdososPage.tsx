@@ -10,7 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { AddIdosoModal } from "@/components/idosos/AddIdosoModal";
 import { EditIdosoModal } from "@/components/idosos/EditIdosoModal";
 import { DeleteIdosoModal } from "@/components/idosos/DeleteIdosoModal";
-import { formatCPF, formatPhone } from "@/lib/utils";
+import { formatCPF, formatPhone, parseISOToLocalDate, calculateAge } from "@/lib/utils";
 import { Idoso } from "@/types";
 import { useNavigate } from "react-router-dom";
 import jsPDF from "jspdf";
@@ -116,14 +116,17 @@ export default function IdososPage() {
     doc.setTextColor(100, 100, 100);
     doc.text(`Gerado em: ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR')}`, pageWidth / 2, 58, { align: "center" });
 
-    const tableData = filteredIdosos.map((idoso) => [
-      idoso.nome,
-      formatCPF(idoso.cpf),
-      new Date(idoso.data_nascimento).toLocaleDateString('pt-BR'),
-      calculateAge(idoso.data_nascimento).toString(),
-      idoso.telefone ? formatPhone(idoso.telefone) : '-',
-      idoso.ativo ? 'Ativo' : 'Inativo'
-    ]);
+    const tableData = filteredIdosos.map((idoso) => {
+      const dataNasc = parseISOToLocalDate(idoso.data_nascimento);
+      return [
+        idoso.nome,
+        formatCPF(idoso.cpf),
+        dataNasc ? dataNasc.toLocaleDateString('pt-BR') : '-',
+        calculateAge(idoso.data_nascimento).toString(),
+        idoso.telefone ? formatPhone(idoso.telefone) : '-',
+        idoso.ativo ? 'Ativo' : 'Inativo'
+      ];
+    });
 
     autoTable(doc, {
       startY: 65,
@@ -149,19 +152,6 @@ export default function IdososPage() {
       default:
         return "bg-gray-100 text-gray-800 hover:bg-gray-100";
     }
-  };
-
-  const calculateAge = (birthDate: string) => {
-    const today = new Date();
-    const birth = new Date(birthDate);
-    let age = today.getFullYear() - birth.getFullYear();
-    const monthDiff = today.getMonth() - birth.getMonth();
-    
-    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
-      age--;
-    }
-    
-    return age;
   };
 
   if (loading) {

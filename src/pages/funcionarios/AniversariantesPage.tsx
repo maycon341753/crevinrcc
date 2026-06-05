@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { formatBrazilianDate } from "@/lib/utils";
+import { formatBrazilianDate, parseISOToLocalDate, calculateAge } from "@/lib/utils";
 
 interface Aniversariante {
   id: string;
@@ -41,26 +41,17 @@ export default function AniversariantesPage() {
     fetchAniversariantes();
   }, []);
 
-  const calcularIdade = (dataNascimento: string): number => {
-    const hoje = new Date();
-    const nascimento = new Date(dataNascimento);
-    let idade = hoje.getFullYear() - nascimento.getFullYear();
-    const mesAtual = hoje.getMonth();
-    const mesNascimento = nascimento.getMonth();
-    
-    if (mesAtual < mesNascimento || (mesAtual === mesNascimento && hoje.getDate() < nascimento.getDate())) {
-      idade--;
-    }
-    
-    return idade;
-  };
-
   const calcularDiasParaAniversario = (dataNascimento: string): number => {
     const hoje = new Date();
-    const nascimento = new Date(dataNascimento);
+    // Resetar horas para comparação justa de dias
+    hoje.setHours(0, 0, 0, 0);
+    
+    const nascimento = parseISOToLocalDate(dataNascimento);
+    if (!nascimento) return 0;
+    
     const anoAtual = hoje.getFullYear();
     
-    // Criar data do aniversário no ano atual
+    // Criar data do aniversário no ano atual (usando o ano atual, mas mês e dia do nascimento)
     const aniversarioEsteAno = new Date(anoAtual, nascimento.getMonth(), nascimento.getDate());
     
     // Se o aniversário já passou este ano, calcular para o próximo ano
@@ -117,41 +108,45 @@ export default function AniversariantesPage() {
       if (funcionarios) {
         funcionarios.forEach((funcionario) => {
           if (funcionario.data_nascimento) {
-            const dataNasc = new Date(funcionario.data_nascimento);
-            const mesNascimento = dataNasc.getMonth() + 1;
-            
-            if (mesNascimento === mesAtual) {
-              aniversariantesDoMes.push({
-                id: funcionario.id,
-                nome: funcionario.nome,
-                data_nascimento: funcionario.data_nascimento,
-                tipo: 'funcionario',
-                cargo: funcionario.cargo,
+            const dataNasc = parseISOToLocalDate(funcionario.data_nascimento);
+            if (dataNasc) {
+              const mesNascimento = dataNasc.getMonth() + 1;
+              
+              if (mesNascimento === mesAtual) {
+                aniversariantesDoMes.push({
+                  id: funcionario.id,
+                  nome: funcionario.nome,
+                  data_nascimento: funcionario.data_nascimento,
+                  tipo: 'funcionario',
+                  cargo: funcionario.cargo,
                 departamento: funcionario.departamentos?.nome,
-                idade: calcularIdade(funcionario.data_nascimento),
+                idade: calculateAge(funcionario.data_nascimento),
                 diasParaAniversario: calcularDiasParaAniversario(funcionario.data_nascimento)
               });
             }
           }
-        });
-      }
+        }
+      });
+    }
 
-      // Processar idosos
+    // Processar idosos
       if (idosos) {
         idosos.forEach((idoso) => {
           if (idoso.data_nascimento) {
-            const dataNasc = new Date(idoso.data_nascimento);
-            const mesNascimento = dataNasc.getMonth() + 1;
-            
-            if (mesNascimento === mesAtual) {
-              aniversariantesDoMes.push({
-                id: idoso.id,
-                nome: idoso.nome,
-                data_nascimento: idoso.data_nascimento,
-                tipo: 'idoso',
-                idade: calcularIdade(idoso.data_nascimento),
-                diasParaAniversario: calcularDiasParaAniversario(idoso.data_nascimento)
-              });
+            const dataNasc = parseISOToLocalDate(idoso.data_nascimento);
+            if (dataNasc) {
+              const mesNascimento = dataNasc.getMonth() + 1;
+              
+              if (mesNascimento === mesAtual) {
+                aniversariantesDoMes.push({
+                  id: idoso.id,
+                  nome: idoso.nome,
+                  data_nascimento: idoso.data_nascimento,
+                  tipo: 'idoso',
+                  idade: calculateAge(idoso.data_nascimento),
+                  diasParaAniversario: calcularDiasParaAniversario(idoso.data_nascimento)
+                });
+              }
             }
           }
         });
@@ -183,7 +178,8 @@ export default function AniversariantesPage() {
   };
 
   const formatarDataAniversario = (dataNascimento: string) => {
-    const data = new Date(dataNascimento);
+    const data = parseISOToLocalDate(dataNascimento);
+    if (!data) return "";
     return `${data.getDate().toString().padStart(2, '0')}/${(data.getMonth() + 1).toString().padStart(2, '0')}`;
   };
 
