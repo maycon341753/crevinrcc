@@ -212,13 +212,85 @@ export default function ProntuarioNutricional() {
           .eq('id', prontuario.id);
 
         if (error) throw error;
+
+        // Salvar no histórico
+        const { error: historyError } = await supabase
+          .from('historico_prontuario_nutricional')
+          .insert([{
+            prontuario_id: prontuario.id,
+            idoso_id: prontuario.idoso_id,
+            peso_atual: prontuario.peso_atual,
+            altura: prontuario.altura,
+            imc: prontuario.imc,
+            peso_usual: prontuario.peso_usual,
+            aj: prontuario.aj,
+            cb: prontuario.cb,
+            cp: prontuario.cp,
+            diagnostico: prontuario.diagnostico,
+            mna_score: prontuario.mna_score,
+            observacoes: prontuario.observacoes,
+            evolucao_nutricional: prontuario.evolucao_nutricional,
+            diagnostico_nutricional: prontuario.diagnostico_nutricional,
+            conduta_dietetica: prontuario.conduta_dietetica,
+            prescricao_dietetica: prontuario.prescricao_dietetica,
+            triagem_a: prontuario.triagem_a,
+            triagem_b: prontuario.triagem_b,
+            triagem_c: prontuario.triagem_c,
+            triagem_d: prontuario.triagem_d,
+            triagem_e: prontuario.triagem_e,
+            triagem_f1: prontuario.triagem_f1,
+            triagem_cp: prontuario.triagem_cp,
+            escore_triagem: prontuario.escore_triagem,
+            status_nutricional: prontuario.status_nutricional
+          }]);
+
+        if (historyError) {
+          console.error('Erro ao salvar histórico:', historyError);
+          // Não lançamos erro aqui para não travar o salvamento principal, 
+          // mas logamos o erro para depuração
+        }
       } else {
         // Criar novo prontuário
-        const { error } = await supabase
+        const { data: newProntuario, error } = await supabase
           .from('prontuario_nutricional')
-          .insert([{ ...dataToSave, created_at: new Date().toISOString() }]);
+          .insert([{ ...dataToSave, created_at: new Date().toISOString() }])
+          .select()
+          .single();
 
         if (error) throw error;
+
+        // Salvar primeiro registro no histórico
+        if (newProntuario) {
+          await supabase
+            .from('historico_prontuario_nutricional')
+            .insert([{
+              prontuario_id: newProntuario.id,
+              idoso_id: newProntuario.idoso_id,
+              peso_atual: newProntuario.peso_atual,
+              altura: newProntuario.altura,
+              imc: newProntuario.imc,
+              peso_usual: newProntuario.peso_usual,
+              aj: newProntuario.aj,
+              cb: newProntuario.cb,
+              cp: newProntuario.cp,
+              diagnostico: newProntuario.diagnostico,
+              mna_score: newProntuario.mna_score,
+              observacoes: newProntuario.observacoes,
+              evolucao_nutricional: newProntuario.evolucao_nutricional,
+              diagnostico_nutricional: newProntuario.diagnostico_nutricional,
+              conduta_dietetica: newProntuario.conduta_dietetica,
+              prescricao_dietetica: newProntuario.prescricao_dietetica,
+              triagem_a: newProntuario.triagem_a,
+              triagem_b: newProntuario.triagem_b,
+              triagem_c: newProntuario.triagem_c,
+              triagem_d: newProntuario.triagem_d,
+              triagem_e: newProntuario.triagem_e,
+              triagem_f1: newProntuario.triagem_f1,
+              triagem_cp: newProntuario.triagem_cp,
+              escore_triagem: newProntuario.escore_triagem,
+              status_nutricional: newProntuario.status_nutricional
+            }]);
+        }
       }
 
       toast({

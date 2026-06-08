@@ -34,6 +34,8 @@ import { NovoIdosoPage } from "./pages/idosos/NovoIdosoPage";
 import ListaEsperaPage from "./pages/idosos/ListaEsperaPage";
 import ProntuarioNutricional from "./pages/idosos/ProntuarioNutricional";
 import ProntuarioNutricionalList from "./pages/idosos/ProntuarioNutricionalList";
+import ProntuarioNutricionalHistory from "./pages/idosos/ProntuarioNutricionalHistory";
+import ProntuarioNutricionalHistoryList from "./pages/idosos/ProntuarioNutricionalHistoryList";
 import ProntuarioMedico from "./pages/idosos/ProntuarioMedico";
 import ProntuarioMedicoList from "./pages/idosos/ProntuarioMedicoList";
 import ProntuarioFisioterapeutico from "./pages/idosos/ProntuarioFisioterapeutico";
@@ -211,6 +213,8 @@ const App = () => (
             <Route path="/idosos/medico" element={<ProtectedRoute><MedicoPage /></ProtectedRoute>} />
             <Route path="/idosos/prontuario-nutricional" element={<ProtectedRoute><ProntuarioNutricionalList /></ProtectedRoute>} />
             <Route path="/idosos/:idosoId/prontuario-nutricional" element={<ProtectedRoute><ProntuarioNutricional /></ProtectedRoute>} />
+              <Route path="/idosos/historico-nutricional" element={<ProtectedRoute><ProntuarioNutricionalHistoryList /></ProtectedRoute>} />
+              <Route path="/idosos/:idosoId/historico-nutricional" element={<ProtectedRoute><ProntuarioNutricionalHistory /></ProtectedRoute>} />
             <Route path="/idosos/prontuario-medico" element={<ProtectedRoute><ProntuarioMedicoList /></ProtectedRoute>} />
             <Route path="/idosos/:idosoId/prontuario-medico" element={<ProtectedRoute><ProntuarioMedico /></ProtectedRoute>} />
             <Route path="/idosos/prontuario-fisioterapeutico" element={<ProtectedRoute><ProntuarioFisioterapeuticoList /></ProtectedRoute>} />

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { FileText, Plus, Search, User, Calendar, Activity, Download } from "lucide-react";
+import { FileText, Plus, Search, User, Calendar, Activity, Download, History } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -414,6 +414,15 @@ export default function ProntuarioNutricionalList() {
                     >
                       <FileText className="h-4 w-4 mr-2" />
                       Ver Prontuário
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => navigate(`/idosos/${prontuario.idoso_id}/historico-nutricional`)}
+                      className="w-full"
+                    >
+                      <History className="h-4 w-4 mr-2" />
+                      Ver Histórico
                     </Button>
                     <Button
                       variant="secondary"
