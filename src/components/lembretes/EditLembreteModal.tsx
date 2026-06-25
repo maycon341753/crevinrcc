@@ -67,17 +67,10 @@ export default function EditLembreteModal({ open, onOpenChange, lembrete, onSucc
 
   useEffect(() => {
     if (open && lembrete) {
-      // Converter data ISO para formato brasileiro
-      const formatToBrazilian = (isoDate: string) => {
-        if (!isoDate) return "";
-        const [year, month, day] = isoDate.split('-');
-        return `${day}/${month}/${year}`;
-      };
-
       setFormData({
         titulo: lembrete.titulo || "",
         descricao: lembrete.descricao || "",
-        data_lembrete: formatToBrazilian(lembrete.data_lembrete),
+        data_lembrete: lembrete.data_lembrete || "",
         hora_lembrete: lembrete.hora_lembrete || "",
         tipo: lembrete.tipo || "geral",
         prioridade: lembrete.prioridade || "media",
@@ -164,31 +157,10 @@ export default function EditLembreteModal({ open, onOpenChange, lembrete, onSucc
     try {
       setLoading(true);
 
-      // Converter data brasileira para ISO
-      const formatToISO = (brazilianDate: string) => {
-        if (!brazilianDate) return "";
-        const cleanDate = brazilianDate.replace(/\D/g, '');
-        if (cleanDate.length !== 8) return "";
-        
-        const day = cleanDate.substring(0, 2);
-        const month = cleanDate.substring(2, 4);
-        const year = cleanDate.substring(4, 8);
-        
-        const dayNum = parseInt(day, 10);
-        const monthNum = parseInt(month, 10);
-        const yearNum = parseInt(year, 10);
-        
-        if (dayNum < 1 || dayNum > 31 || monthNum < 1 || monthNum > 12 || yearNum < 1900) {
-          return "";
-        }
-        
-        return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
-      };
-
       const lembreteData = {
         titulo: formData.titulo.trim(),
         descricao: formData.descricao.trim() || null,
-        data_lembrete: formatToISO(formData.data_lembrete),
+        data_lembrete: formData.data_lembrete,
         hora_lembrete: formData.hora_lembrete || null,
         tipo: formData.tipo,
         prioridade: formData.prioridade,
