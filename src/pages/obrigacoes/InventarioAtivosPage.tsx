@@ -88,6 +88,8 @@ export default function InventarioAtivosPage() {
   const [ativos, setAtivos] = useState<AtivoInventario[]>([]);
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState<AtivoStatus | "todos">("todos");
+  const [dataInicio, setDataInicio] = useState("");
+  const [dataFim, setDataFim] = useState("");
   const [openForm, setOpenForm] = useState(false);
   const [saving, setSaving] = useState(false);
   const [editing, setEditing] = useState<AtivoInventario | null>(null);
@@ -123,6 +125,25 @@ export default function InventarioAtivosPage() {
     const s = search.trim().toLowerCase();
     return ativos.filter((a) => {
       if (filterStatus !== "todos" && a.status !== filterStatus) return false;
+
+      // Filtro por período de aquisição
+      if (dataInicio || dataFim) {
+        const dataAquisicao = a.data_aquisicao ? new Date(a.data_aquisicao) : null;
+        if (!dataAquisicao) return false;
+
+        if (dataInicio) {
+          const dtInicio = new Date(dataInicio);
+          dtInicio.setHours(0, 0, 0, 0);
+          if (dataAquisicao < dtInicio) return false;
+        }
+
+        if (dataFim) {
+          const dtFim = new Date(dataFim);
+          dtFim.setHours(23, 59, 59, 999);
+          if (dataAquisicao > dtFim) return false;
+        }
+      }
+
       if (!s) return true;
       const hay = [
         a.patrimonio_numero,
@@ -138,7 +159,7 @@ export default function InventarioAtivosPage() {
         .toLowerCase();
       return hay.includes(s);
     });
-  }, [ativos, search, filterStatus]);
+  }, [ativos, search, filterStatus, dataInicio, dataFim]);
 
   const exportPdf = () => {
     const doc = new jsPDF({ unit: "pt", format: "a4", orientation: "landscape" });
@@ -149,7 +170,15 @@ export default function InventarioAtivosPage() {
     const instituicaoLinha1 = "CREVIN - Lar do Idoso";
     const instituicaoLinha2 = "Comunidade de Renovação Esperança e Vida Nova";
     const instituicaoCnpj = "CNPJ: 01.600.253/0001-69";
-    const nomeRelatorio = "Relatório: Inventário de Ativos";
+    let nomeRelatorio = "Relatório: Inventário de Ativos";
+    
+    // Adiciona período selecionado ao nome do relatório, se houver
+    if (dataInicio || dataFim) {
+      const inicioStr = dataInicio ? formatBrazilianDate(dataInicio) : "Início";
+      const fimStr = dataFim ? formatBrazilianDate(dataFim) : "Fim";
+      nomeRelatorio += ` (${inicioStr} - ${fimStr})`;
+    }
+    
     const instituicaoEndereco =
       "Avenida Floriano Peixoto, Quadra 63, Lote 12, Setor Tradicional, Planaltina - DF, CEP: 73330-083";
 
@@ -461,29 +490,41 @@ export default function InventarioAtivosPage() {
         <CardHeader>
           <CardTitle>Filtros</CardTitle>
         </CardHeader>
-        <CardContent className="p-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="relative w-full sm:max-w-md">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Buscar por patrimônio, nome, categoria, localização..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pl-9"
-            />
+        <CardContent className="p-4 flex flex-col gap-3">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="relative w-full sm:max-w-md">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Buscar por patrimônio, nome, categoria, localização..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="pl-9"
+              />
+            </div>
+            <div className="w-full sm:w-[240px]">
+              <Select value={filterStatus} onValueChange={(v) => setFilterStatus(v as AtivoStatus | "todos")}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="todos">Todos</SelectItem>
+                  <SelectItem value="ativo">Ativo</SelectItem>
+                  <SelectItem value="manutencao">Manutenção</SelectItem>
+                  <SelectItem value="emprestado">Emprestado</SelectItem>
+                  <SelectItem value="baixado">Baixado</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
-          <div className="w-full sm:w-[240px]">
-            <Select value={filterStatus} onValueChange={(v) => setFilterStatus(v as AtivoStatus | "todos")}>
-              <SelectTrigger>
-                <SelectValue placeholder="Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="todos">Todos</SelectItem>
-                <SelectItem value="ativo">Ativo</SelectItem>
-                <SelectItem value="manutencao">Manutenção</SelectItem>
-                <SelectItem value="emprestado">Emprestado</SelectItem>
-                <SelectItem value="baixado">Baixado</SelectItem>
-              </SelectContent>
-            </Select>
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
+            <div className="flex-1">
+              <Label htmlFor="data-inicio">Data de Aquisição (Início)</Label>
+              <Input id="data-inicio" type="date" value={dataInicio} onChange={(e) => setDataInicio(e.target.value)} />
+            </div>
+            <div className="flex-1">
+              <Label htmlFor="data-fim">Data de Aquisição (Fim)</Label>
+              <Input id="data-fim" type="date" value={dataFim} onChange={(e) => setDataFim(e.target.value)} />
+            </div>
           </div>
         </CardContent>
       </Card>
