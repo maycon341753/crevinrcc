@@ -40,6 +40,7 @@ const funcionarioSchema = z.object({
   cpf: z.string().regex(/^\d{3}\.\d{3}\.\d{3}-\d{2}$/, "CPF deve estar no formato 000.000.000-00"),
   telefone: z.string().optional(),
   email: z.string().email("Email inválido").optional().or(z.literal("")),
+  data_nascimento: z.string().optional(),
   cargo: z.string().min(2, "Cargo deve ter pelo menos 2 caracteres"),
   departamento_id: z.string().min(1, "Selecione um departamento"),
   // Salário digitado em formato brasileiro (ex: 1.234,56)
@@ -72,6 +73,7 @@ export function AddFuncionarioModal({ open, onOpenChange, onSuccess }: AddFuncio
       cpf: "",
       telefone: "",
       email: "",
+      data_nascimento: "",
       cargo: "",
       departamento_id: "",
       salario: "",
@@ -134,6 +136,7 @@ export function AddFuncionarioModal({ open, onOpenChange, onSuccess }: AddFuncio
           cpf: data.cpf,
           telefone: data.telefone,
           email: data.email || null,
+          data_nascimento: data.data_nascimento || null,
           cargo: data.cargo,
           departamento_id: data.departamento_id,
           salario: parseBrazilianSalary(data.salario),
@@ -150,6 +153,7 @@ export function AddFuncionarioModal({ open, onOpenChange, onSuccess }: AddFuncio
         cpf: "",
         telefone: "",
         email: "",
+        data_nascimento: "",
         cargo: "",
         departamento_id: "",
         salario: "",
@@ -252,6 +256,26 @@ export function AddFuncionarioModal({ open, onOpenChange, onSuccess }: AddFuncio
                         type="email"
                         placeholder="funcionario@email.com"
                         {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Data de Nascimento */}
+              <FormField
+                control={form.control}
+                name="data_nascimento"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Data de Nascimento</FormLabel>
+                    <FormControl>
+                      <DateInput
+                        id="data_nascimento"
+                        value={field.value}
+                        onChange={field.onChange}
+                        placeholder="dd/mm/aaaa"
                       />
                     </FormControl>
                     <FormMessage />

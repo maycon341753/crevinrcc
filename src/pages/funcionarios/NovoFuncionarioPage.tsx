@@ -38,6 +38,7 @@ const funcionarioSchema = z.object({
   telefone: z.string().optional(),
   email: z.string().email("Email inválido").optional().or(z.literal("")),
   endereco: z.string().optional(),
+  data_nascimento: z.string().optional(),
   cargo: z.string().min(2, "Cargo deve ter pelo menos 2 caracteres"),
   departamento_id: z.string().min(1, "Selecione um departamento"),
   salario: z.string().refine((val) => !val || isValidBrazilianSalary(val), {
@@ -65,6 +66,7 @@ export default function NovoFuncionarioPage() {
       telefone: "",
       email: "",
       endereco: "",
+      data_nascimento: "",
       cargo: "",
       departamento_id: "",
       salario: 0,
@@ -112,6 +114,7 @@ export default function NovoFuncionarioPage() {
           telefone: data.telefone.replace(/\D/g, ''), // Remove formatação do telefone
           email: data.email || null,
           endereco: data.endereco || null,
+          data_nascimento: data.data_nascimento || null,
           cargo: data.cargo,
           departamento_id: data.departamento_id,
           salario: data.salario ? parseBrazilianSalary(data.salario) : null,
@@ -279,21 +282,40 @@ export default function NovoFuncionarioPage() {
                   )}
                 />
 
-                <div className="sm:col-span-1">
-                  <FormField
-                    control={form.control}
-                    name="endereco"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Endereço</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Digite o endereço completo" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
+                <FormField
+                  control={form.control}
+                  name="data_nascimento"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Data de Nascimento</FormLabel>
+                      <FormControl>
+                        <DateInput
+                          id="data_nascimento"
+                          value={field.value}
+                          onChange={field.onChange}
+                          placeholder="dd/mm/aaaa"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <div className="grid gap-4 grid-cols-1">
+                <FormField
+                  control={form.control}
+                  name="endereco"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Endereço</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Digite o endereço completo" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               </div>
             </CardContent>
           </Card>

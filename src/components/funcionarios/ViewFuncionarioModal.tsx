@@ -102,6 +102,16 @@ export function ViewFuncionarioModal({
                   <span className="text-sm">{funcionario.telefone}</span>
                 </div>
               </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-500">Data de Nascimento</label>
+                <div className="flex items-center gap-2">
+                  <Calendar className="h-4 w-4 text-gray-400" />
+                  <span className="text-sm">
+                    {funcionario.data_nascimento ? formatBrazilianDate(funcionario.data_nascimento) : 'Não informada'}
+                  </span>
+                </div>
+              </div>
             </div>
           </div>
 
